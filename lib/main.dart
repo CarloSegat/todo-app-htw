@@ -21,6 +21,7 @@ class _TodoListPageState extends State<TodoListPage> {
 
   void _add(String title) => setState(() => _todos.add(Todo(title)));
   void _toggle(int i) => setState(() => _todos[i] = _todos[i].toggle());
+  void _delete(int i) => setState(() => _todos.removeAt(i));
 
   @override
   Widget build(BuildContext context) {
@@ -31,16 +32,27 @@ class _TodoListPageState extends State<TodoListPage> {
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
       ),
-      // ListView constructor is not called directly, 
+      // ListView constructor is not called directly,
       // the .builder will smartly skip items that are not visible
       body: ListView.builder(
         itemCount: _todos.length,
         itemBuilder: (_, i) {
           final t = _todos[i];
-          return CheckboxListTile(
-            value: t.done,
-            title: Text(t.title),
-            onChanged: (_) => _toggle(i),
+          return Dismissible(
+            key: ValueKey(t.title),
+            direction: DismissDirection.endToStart,
+            background: Container(
+              color: Colors.red,
+              alignment: Alignment.centerRight,
+              padding: const EdgeInsets.only(right: 16.0),
+              child: const Icon(Icons.delete, color: Colors.white),
+            ),
+            onDismissed: (_) => _delete(i),
+            child: CheckboxListTile(
+              value: t.done,
+              title: Text(t.title),
+              onChanged: (_) => _toggle(i),
+            ),
           );
         },
       ),
