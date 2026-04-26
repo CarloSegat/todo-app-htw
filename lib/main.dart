@@ -6,6 +6,7 @@ class Todo {
   final bool done;
   Todo toggle() => Todo(title, done: !done);
 }
+
 class TodosHost extends StatefulWidget {
   const TodosHost({super.key, required this.child});
   final Widget child;
@@ -25,11 +26,8 @@ class _TodosHostState extends State<TodosHost> {
   });
 
   @override
-  Widget build(BuildContext context) => TodoListPage(
-    todos: _todos,
-    onAdd: _add,
-    onToggle: _toggle,
-  );
+  Widget build(BuildContext context) =>
+      TodoListPage(todos: _todos, onAdd: _add, onToggle: _toggle);
 }
 
 class TodoListPage extends StatelessWidget {
@@ -41,9 +39,8 @@ class TodoListPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    
     // final scope = TodosScope.of(context);
-   
+
     return Scaffold(
       appBar: AppBar(
         title: const Text(
@@ -70,5 +67,9 @@ class TodoListPage extends StatelessWidget {
   }
 }
 
-void main() =>
-    runApp(const MaterialApp(home: TodosHost(child: TodoListPage())));
+void main() => runApp(
+  const MaterialApp(
+    debugShowCheckedModeBanner: false,
+    home: TodosHost(child: TodoListPage()),
+  ),
+);
