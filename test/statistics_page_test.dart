@@ -2,10 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:todo/statistics_page.dart';
 import 'package:todo/todo.dart';
+import 'package:todo/todos_scope.dart';
 
 void main() {
   Widget harness(List<Todo> todos) {
-    return MaterialApp(home: StatisticsPage(todos: todos));
+    return TodosScope(
+      initialTodos: todos,
+      child: const MaterialApp(home: StatisticsPage()),
+    );
   }
 
   testWidgets('empty list → Total: 0, Completed: 0%', (tester) async {

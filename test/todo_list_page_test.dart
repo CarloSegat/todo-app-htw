@@ -3,26 +3,18 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:todo/statistics_page.dart';
 import 'package:todo/todo.dart';
 import 'package:todo/todo_list_page.dart';
+import 'package:todo/todos_scope.dart';
 
 void main() {
-  Widget harness({
-    required List<Todo> todos,
-    void Function(String)? onAdd,
-    void Function(int)? onToggle,
-    void Function(int)? onDelete,
-  }) {
-    return MaterialApp(
-      home: TodoListPage(
-        todos: todos,
-        onAdd: onAdd ?? (_) {},
-        onToggle: onToggle ?? (_) {},
-        onDelete: onDelete ?? (_) {},
-      ),
+  Widget harness({List<Todo> todos = const []}) {
+    return TodosScope(
+      initialTodos: todos,
+      child: const MaterialApp(home: TodoListPage()),
     );
   }
 
   testWidgets('empty list renders no CheckboxListTile', (tester) async {
-    await tester.pumpWidget(harness(todos: const []));
+    await tester.pumpWidget(harness());
 
     expect(find.byType(CheckboxListTile), findsNothing);
   });
@@ -38,11 +30,10 @@ void main() {
     expect(find.text('c'), findsOneWidget);
   });
 
-  testWidgets('type text + tap Add --> onAdd called; dialog closes', (
+  testWidgets('type text + tap Add --> tile appears; dialog closes', (
     tester,
   ) async {
-    final addCalls = <String>[];
-    await tester.pumpWidget(harness(todos: const [], onAdd: addCalls.add));
+    await tester.pumpWidget(harness());
 
     await tester.tap(find.byType(FloatingActionButton));
     await tester.pumpAndSettle();
@@ -50,66 +41,53 @@ void main() {
     await tester.tap(find.text('Add'));
     await tester.pumpAndSettle();
 
-    expect(addCalls, ['eggs']);
     expect(find.byType(AlertDialog), findsNothing);
+    expect(find.text('eggs'), findsOneWidget);
+    expect(find.byType(CheckboxListTile), findsOneWidget);
   });
 
-  testWidgets('empty text + tap Add --> onAdd NOT called', (tester) async {
-    final addCalls = <String>[];
-    await tester.pumpWidget(harness(todos: const [], onAdd: addCalls.add));
+  testWidgets('empty text + tap Add --> no tile added', (tester) async {
+    await tester.pumpWidget(harness());
 
     await tester.tap(find.byType(FloatingActionButton));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Add'));
     await tester.pumpAndSettle();
 
-    expect(addCalls, isEmpty);
     expect(find.byType(AlertDialog), findsNothing);
+    expect(find.byType(CheckboxListTile), findsNothing);
   });
 
-  
-  testWidgets('tap checkbox --> onToggle called with correct index', (
-    tester,
-  ) async {
-    final toggleCalls = <int>[];
+  testWidgets('tap checkbox --> that todo flips to done', (tester) async {
     await tester.pumpWidget(
-      harness(
-        todos: [Todo('a'), Todo('b'), Todo('c')],
-        onToggle: toggleCalls.add,
-      ),
+      harness(todos: [Todo('a'), Todo('b'), Todo('c')]),
     );
 
     await tester.tap(find.byType(CheckboxListTile).at(1));
     await tester.pump();
 
-    // in the todo list page we wrote `onChanged: (_) => onToggle(i)`
-
-    expect(toggleCalls, [1]);
+    final tile = tester.widget<CheckboxListTile>(
+      find.byType(CheckboxListTile).at(1),
+    );
+    expect(tile.value, true);
   });
 
-  testWidgets('swipe --> onDelete called', (
-    tester,
-  ) async {
-    final deleteCalls = <int>[];
+  testWidgets('swipe --> tile is removed', (tester) async {
     await tester.pumpWidget(
-      harness(
-        todos: [Todo('a'), Todo('b')],
-        onDelete: deleteCalls.add,
-      ),
+      harness(todos: [Todo('a'), Todo('b')]),
     );
-
-    // in the todo list we wrote: `onDismissed: (_) => onDelete(i)`
 
     await tester.drag(find.text('b'), const Offset(-500, 0));
     await tester.pumpAndSettle();
 
-    expect(deleteCalls, [1]);
+    expect(find.text('b'), findsNothing);
+    expect(find.byType(CheckboxListTile), findsOneWidget);
   });
 
   testWidgets('tap bar_chart icon --> navigates to StatisticsPage', (
     tester,
   ) async {
-    await tester.pumpWidget(harness(todos: const []));
+    await tester.pumpWidget(harness());
 
     await tester.tap(find.byIcon(Icons.bar_chart));
     await tester.pumpAndSettle();
