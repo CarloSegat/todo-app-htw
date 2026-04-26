@@ -11,7 +11,7 @@ class Todo {
 
 class TodoListPage extends StatefulWidget {
   const TodoListPage({super.key});
-  
+
   @override
   State<TodoListPage> createState() => _TodoListPageState();
 }
@@ -31,6 +31,8 @@ class _TodoListPageState extends State<TodoListPage> {
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
       ),
+      // ListView constructor is not called directly, 
+      // the .builder will smartly skip items that are not visible
       body: ListView.builder(
         itemCount: _todos.length,
         itemBuilder: (_, i) {
@@ -43,7 +45,40 @@ class _TodoListPageState extends State<TodoListPage> {
         },
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => _add('Task ${_todos.length + 1}'),
+        onPressed: () async {
+          // controller holds the value of the text (source of truth)
+          // it also holds more stuff like cursor position and composing region (for e.g. thai)
+          final controller = TextEditingController();
+
+          // showDialog implements Material-style pop up
+          // <void> emans no return value when popup is closed
+          await showDialog<void>(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: const Text('Add Todo'),
+              content: TextField(
+                controller: controller,
+                autofocus: true,
+                decoration: const InputDecoration(hintText: 'Enter todo text'),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Cancel'),
+                ),
+                TextButton(
+                  onPressed: () {
+                    if (controller.text.isNotEmpty) {
+                      _add(controller.text);
+                    }
+                    Navigator.pop(context);
+                  },
+                  child: const Text('Add'),
+                ),
+              ],
+            ),
+          );
+        },
         child: const Icon(Icons.add),
       ),
     );
