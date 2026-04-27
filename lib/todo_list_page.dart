@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'statistics_page.dart';
+import 'task_detail_page.dart';
 import 'todos_scope.dart';
 
 class TodoListPage extends StatelessWidget {
@@ -40,10 +41,17 @@ class TodoListPage extends StatelessWidget {
               child: const Icon(Icons.delete, color: Colors.white),
             ),
             onDismissed: (_) => scope.delete(i),
-            child: CheckboxListTile(
-              value: t.done,
+            child: ListTile(
+              leading: Checkbox(
+                value: t.done,
+                onChanged: (_) => scope.toggle(i),
+              ),
               title: Text(t.title),
-              onChanged: (_) => scope.toggle(i),
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => TaskDetailPage(index: i),
+                ),
+              ),
             ),
           );
         },

@@ -13,10 +13,10 @@ void main() {
     );
   }
 
-  testWidgets('empty list renders no CheckboxListTile', (tester) async {
+  testWidgets('empty list renders no ListTile', (tester) async {
     await tester.pumpWidget(harness());
 
-    expect(find.byType(CheckboxListTile), findsNothing);
+    expect(find.byType(ListTile), findsNothing);
   });
 
   testWidgets('renders one tile per todo with title text', (tester) async {
@@ -24,7 +24,7 @@ void main() {
       harness(todos: [Todo('a'), Todo('b'), Todo('c')]),
     );
 
-    expect(find.byType(CheckboxListTile), findsNWidgets(3));
+    expect(find.byType(ListTile), findsNWidgets(3));
     expect(find.text('a'), findsOneWidget);
     expect(find.text('b'), findsOneWidget);
     expect(find.text('c'), findsOneWidget);
@@ -43,7 +43,7 @@ void main() {
 
     expect(find.byType(AlertDialog), findsNothing);
     expect(find.text('eggs'), findsOneWidget);
-    expect(find.byType(CheckboxListTile), findsOneWidget);
+    expect(find.byType(ListTile), findsOneWidget);
   });
 
   testWidgets('empty text + tap Add --> no tile added', (tester) async {
@@ -55,7 +55,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byType(AlertDialog), findsNothing);
-    expect(find.byType(CheckboxListTile), findsNothing);
+    expect(find.byType(ListTile), findsNothing);
   });
 
   testWidgets('tap checkbox --> that todo flips to done', (tester) async {
@@ -63,13 +63,11 @@ void main() {
       harness(todos: [Todo('a'), Todo('b'), Todo('c')]),
     );
 
-    await tester.tap(find.byType(CheckboxListTile).at(1));
+    await tester.tap(find.byType(Checkbox).at(1));
     await tester.pump();
 
-    final tile = tester.widget<CheckboxListTile>(
-      find.byType(CheckboxListTile).at(1),
-    );
-    expect(tile.value, true);
+    final box = tester.widget<Checkbox>(find.byType(Checkbox).at(1));
+    expect(box.value, true);
   });
 
   testWidgets('swipe --> tile is removed', (tester) async {
@@ -81,7 +79,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('b'), findsNothing);
-    expect(find.byType(CheckboxListTile), findsOneWidget);
+    expect(find.byType(ListTile), findsOneWidget);
   });
 
   testWidgets('tap bar_chart icon --> navigates to StatisticsPage', (

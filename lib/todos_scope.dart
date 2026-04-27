@@ -12,7 +12,6 @@ class TodosScope extends StatefulWidget {
   final Widget child;
   final List<Todo> initialTodos;
 
-  // "of" is a naming convention in Flutter
   static TodosInherited of(BuildContext context) {
     final scope = context.dependOnInheritedWidgetOfExactType<TodosInherited>();
     assert(scope != null, 'No TodosScope found in context');
@@ -41,6 +40,14 @@ class _TodosScopeState extends State<TodosScope> {
     _todos = [..._todos.sublist(0, i), ..._todos.sublist(i + 1)];
   });
 
+  void _update(int i, Todo updated) => setState(() {
+    _todos = [
+      ..._todos.sublist(0, i),
+      updated,
+      ..._todos.sublist(i + 1),
+    ];
+  });
+
   @override
   Widget build(BuildContext context) {
     return TodosInherited._(
@@ -48,6 +55,7 @@ class _TodosScopeState extends State<TodosScope> {
       add: _add,
       toggle: _toggle,
       delete: _delete,
+      update: _update,
       child: widget.child,
     );
   }
@@ -64,6 +72,7 @@ class TodosInherited extends InheritedWidget {
     required this.add,
     required this.toggle,
     required this.delete,
+    required this.update,
     required super.child, // InheritedWidget must have a child (to continue the tree)
   });
 
@@ -71,6 +80,7 @@ class TodosInherited extends InheritedWidget {
   final void Function(String title) add;
   final void Function(int index) toggle;
   final void Function(int index) delete;
+  final void Function(int index, Todo updated) update;
 
   // when this widget is rebuilt, rebuild its descendants ONLY IF the todos changed
   @override
