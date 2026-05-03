@@ -28,7 +28,9 @@ class _TodosScopeState extends State<TodosScope> {
   void _add(String title) =>
       setState(() => _todos = [..._todos, Todo(title)]);
 
-  void _toggle(int i) => setState(() {
+  void _toggle(String id) => setState(() {
+    final i = _todos.indexWhere((t) => t.id == id);
+    if (i == -1) return;
     _todos = [
       ..._todos.sublist(0, i),
       _todos[i].toggle(),
@@ -36,11 +38,15 @@ class _TodosScopeState extends State<TodosScope> {
     ];
   });
 
-  void _delete(int i) => setState(() {
+  void _delete(String id) => setState(() {
+    final i = _todos.indexWhere((t) => t.id == id);
+    if (i == -1) return;
     _todos = [..._todos.sublist(0, i), ..._todos.sublist(i + 1)];
   });
 
-  void _update(int i, Todo updated) => setState(() {
+  void _update(String id, Todo updated) => setState(() {
+    final i = _todos.indexWhere((t) => t.id == id);
+    if (i == -1) return;
     _todos = [
       ..._todos.sublist(0, i),
       updated,
@@ -78,9 +84,16 @@ class TodosInherited extends InheritedWidget {
 
   final List<Todo> todos;
   final void Function(String title) add;
-  final void Function(int index) toggle;
-  final void Function(int index) delete;
-  final void Function(int index, Todo updated) update;
+  final void Function(String id) toggle;
+  final void Function(String id) delete;
+  final void Function(String id, Todo updated) update;
+
+  Todo? findById(String id) {
+    for (final t in todos) {
+      if (t.id == id) return t;
+    }
+    return null;
+  }
 
   // when this widget is rebuilt, rebuild its descendants ONLY IF the todos changed
   @override

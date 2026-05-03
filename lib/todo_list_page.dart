@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
-import 'statistics_page.dart';
-import 'task_detail_page.dart';
 import 'todos_scope.dart';
 
 class TodoListPage extends StatelessWidget {
@@ -21,9 +20,7 @@ class TodoListPage extends StatelessWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.bar_chart),
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const StatisticsPage()),
-            ),
+            onPressed: () => context.go('/stats'),
           ),
         ],
       ),
@@ -32,7 +29,7 @@ class TodoListPage extends StatelessWidget {
         itemBuilder: (_, i) {
           final t = todos[i];
           return Dismissible(
-            key: ValueKey(t.title),
+            key: ValueKey(t.id),
             direction: DismissDirection.endToStart,
             background: Container(
               color: Colors.red,
@@ -40,18 +37,14 @@ class TodoListPage extends StatelessWidget {
               padding: const EdgeInsets.only(right: 16.0),
               child: const Icon(Icons.delete, color: Colors.white),
             ),
-            onDismissed: (_) => scope.delete(i),
+            onDismissed: (_) => scope.delete(t.id),
             child: ListTile(
               leading: Checkbox(
                 value: t.done,
-                onChanged: (_) => scope.toggle(i),
+                onChanged: (_) => scope.toggle(t.id),
               ),
               title: Text(t.title),
-              onTap: () => Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => TaskDetailPage(index: i),
-                ),
-              ),
+              onTap: () => context.go('/task/${t.id}'),
             ),
           );
         },

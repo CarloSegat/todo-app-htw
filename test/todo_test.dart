@@ -19,4 +19,27 @@ void main() {
       expect(twice.done, false);
     });
   });
+
+  group('Todo.id', () {
+    test('two todos have distinct auto-generated ids', () {
+      final a = Todo('a');
+      final b = Todo('b');
+
+      expect(a.id, isNotEmpty);
+      expect(b.id, isNotEmpty);
+      expect(a.id, isNot(b.id));
+    });
+
+    test('copyWith preserves id', () {
+      final a = Todo('a');
+      final updated = a.copyWith(title: 'b', done: true);
+
+      expect(updated.id, a.id);
+    });
+
+    test('toggle preserves id', () {
+      final a = Todo('a');
+      expect(a.toggle().id, a.id);
+    });
+  });
 }

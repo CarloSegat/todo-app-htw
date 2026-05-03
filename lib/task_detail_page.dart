@@ -1,37 +1,33 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import 'todos_scope.dart';
 
 class TaskDetailPage extends StatefulWidget {
-  const TaskDetailPage({super.key, required this.index});
+  const TaskDetailPage({super.key, required this.id});
 
-  final int index;
+  final String id;
 
   @override
   State<TaskDetailPage> createState() => _TaskDetailPageState();
 }
 
 class _TaskDetailPageState extends State<TaskDetailPage> {
-  // the value of this is lost when navigating out of the detail window
   TextEditingController? _description;
 
-  // State class has a default initState method that is run once after lanucnhing the app
-  // initState will call didChangeDependencies to setup the text controller
   @override
   void didChangeDependencies() {
+    // also called once after init
     super.didChangeDependencies();
     if (_description == null) {
-      final todos = TodosScope.of(context).todos;
-      if (widget.index < todos.length) {
-        _description = TextEditingController(
-          text: todos[widget.index].description,
-        );
+      // notice how the _TaskDetailPageState does not hold a reference to the Todo
+      // instead it grabs it from the scope when it needs it 
+      final todo = TodosScope.of(context).findById(widget.id);
+      if (todo != null) {
+        _description = TextEditingController(text: todo.description);
       }
     }
   }
-
-  // from initState we cannot access TodosScope.of
-  // so we put the text controller initialization in the didChangeDependencies
 
   @override
   void dispose() {
@@ -39,10 +35,25 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
     super.dispose();
   }
 
+  Future<void> _share(BuildContext context) async {
+    final link = 'todoapp://task/${widget.id}';
+    await Clipboard.setData(ClipboardData(text: link));
+    if (! context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Link copied')),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final scope = TodosScope.of(context);
-    final todo = scope.todos[widget.index];
+    final todo = scope.findById(widget.id);
+
+    if (todo == null) {
+      return const Scaffold(
+        body: Center(child: Text('Task not found')),
+      );
+    }
 
     return Scaffold(
       appBar: AppBar(title: const Text('Task Detail')),
@@ -53,7 +64,7 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
             children: [
               Checkbox(
                 value: todo.done,
-                onChanged: (_) => scope.toggle(widget.index),
+                onChanged: (_) => scope.toggle(todo.id),
               ),
               Expanded(
                 child: Text(
@@ -73,10 +84,14 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
               labelText: 'Description',
               border: OutlineInputBorder(),
             ),
-            onChanged: (text) => scope.update(
-              widget.index,
-              todo.copyWith(description: text),
-            ),
+            onChanged: (text) =>
+                scope.update(todo.id, todo.copyWith(description: text)),
+          ),
+          const SizedBox(height: 16),
+          FilledButton.icon(
+            icon: const Icon(Icons.share),
+            label: const Text('Share (deeplink)'),
+            onPressed: () => _share(context),
           ),
         ],
       ),
