@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Protocol
 from uuid import uuid4
-from models import TodoCreate, TodoOut
+from models import TodoCreate, TodoOut, TodoUpdate
 
 
 # Protocol and ... syntax new in python 3.8 --> how you define interfaces
@@ -13,6 +13,10 @@ class ITodoRepo(Protocol):
     def get(self, id: str) -> TodoOut | None: ...
 
     def create(self, data: TodoCreate) -> TodoOut: ...
+
+    def delete(self, id: str) -> bool: ...
+
+    def update(self, id: str, data: TodoUpdate) -> TodoOut | None: ...
 
 
 class InMemoryTodoRepo:
@@ -40,3 +44,24 @@ class InMemoryTodoRepo:
         }
         self._store[id] = item
         return TodoOut(**item)
+
+    def delete(self, id: str) -> bool:
+        if id in self._store:
+            del self._store[id]
+            return True
+        return False
+
+    def update(self, id: str, data: TodoUpdate) -> TodoOut | None:
+        if id not in self._store:
+            return None
+        
+        # replace the data with what was provided
+        if data.title is not None:
+            self._store[id]["title"] = data.title
+        if data.description is not None:
+            self._store[id]["description"] = data.description
+        if data.done is not None:
+            self._store[id]["done"] = data.done
+        
+            
+        return TodoOut(**self._store[id])
