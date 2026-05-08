@@ -34,15 +34,14 @@ class InMemoryTodoRepo:
         return None
 
     def create(self, data: TodoCreate) -> TodoOut:
-        id = str(uuid4())
         item = {
-            "id": id,
+            "id": data.id,
             "title": data.title,
             "description": data.description,
             "done": False,
             "created_at": datetime.now(),
         }
-        self._store[id] = item
+        self._store[data.id] = item
         return TodoOut(**item)
 
     def delete(self, id: str) -> bool:

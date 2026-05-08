@@ -3,6 +3,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 
 class TodoCreate(BaseModel):
+    id: str
     title: str
     description: str = ""
 

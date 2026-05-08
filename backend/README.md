@@ -6,8 +6,8 @@ OR `pip3 install -r requirements.txt`
 `uvicorn main:app --reload`
 
 # Test TODO creation 
-`curl -X POST http://localhost:8000/todos -H "Content-Type: application/json" -d '{"title": "My Task", "description": "Task description"}'`
-
+`curl -X POST http://localhost:8000/todos -H "Content-Type: application/json" -d '{"id":"test-uuid-123","title":"Buy milk","description":"2% fat"}'`                                                                                          
+    
 # Test TODO retireval 
 either `curl GET http://localhost:8000/todos`
 or visit `http://localhost:8000/todos` on your browser 
