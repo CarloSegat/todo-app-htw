@@ -68,11 +68,11 @@ class TodoListPage extends StatelessWidget {
                   child: const Text('Cancel'),
                 ),
                 TextButton(
-                  onPressed: () {
+                  onPressed: () async {
                     if (controller.text.isNotEmpty) {
-                      scope.add(controller.text);
+                      await scope.add(controller.text); // the pop up won't close until the server responds
                     }
-                    Navigator.pop(context);
+                    if (context.mounted) Navigator.pop(context);
                   },
                   child: const Text('Add'),
                 ),

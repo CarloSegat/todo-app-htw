@@ -1,5 +1,6 @@
 import 'package:flutter/widgets.dart';
 
+import 'api_client.dart';
 import 'todo.dart';
 
 class TodosScope extends StatefulWidget {
@@ -25,8 +26,34 @@ class TodosScope extends StatefulWidget {
 class _TodosScopeState extends State<TodosScope> {
   late List<Todo> _todos = List.of(widget.initialTodos);
 
-  void _add(String title) =>
-      setState(() => _todos = [..._todos, Todo(title)]);
+  @override
+  void initState() {
+    super.initState();
+    _fetchAll();
+  }
+
+  Future<void> _fetchAll() async {
+    try {
+      final todos = await ApiClient.fetchAll();
+      if (mounted) {
+        setState(() => _todos = todos);
+      }
+    } catch (e) {
+      print('Error fetching todos: $e');
+    }
+  }
+
+  Future<void> _add(String title) async {
+    try {
+      final todo = Todo(title);
+      final created = await ApiClient.create(todo);
+      if (mounted) {
+        setState(() => _todos = [..._todos, created]);
+      }
+    } catch (e) {
+      print('Error creating todo: $e');
+    }
+  }
 
   void _toggle(String id) => setState(() {
     final i = _todos.indexWhere((t) => t.id == id);
@@ -83,7 +110,7 @@ class TodosInherited extends InheritedWidget {
   });
 
   final List<Todo> todos;
-  final void Function(String title) add;
+  final Future<void> Function(String title) add;
   final void Function(String id) toggle;
   final void Function(String id) delete;
   final void Function(String id, Todo updated) update;
