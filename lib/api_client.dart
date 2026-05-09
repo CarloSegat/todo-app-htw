@@ -13,15 +13,7 @@ class ApiClient {
     }
 
     final List<dynamic> data = jsonDecode(response.body);
-    return data
-        .map((json) => Todo(
-              json['title'],
-              id: json['id'],
-              description: json['description'],
-              done: json['done'],
-              createdAt: DateTime.parse(json['createdAt']),
-            ))
-        .toList();
+    return data.map(_parseTodo).toList();
   }
 
   static Future<Todo> create(Todo todo) async {
@@ -39,13 +31,50 @@ class ApiClient {
       throw Exception('Failed to create todo: ${response.statusCode}');
     }
 
-    final json = jsonDecode(response.body);
-    return Todo(
-      json['title'],
-      id: json['id'],
-      description: json['description'],
-      done: json['done'],
-      createdAt: DateTime.parse(json['createdAt']),
-    );
+    return _parseTodo(jsonDecode(response.body));
   }
+
+  static Future<Todo> update(
+    String id, {
+    String? title,
+    String? description,
+    bool? done,
+  }) async {
+    final body = <String, dynamic>{};
+    if (title != null) body['title'] = title;
+    if (description != null) body['description'] = description;
+    if (done != null) body['done'] = done;
+
+    final response = await http.put(
+      Uri.parse('$_baseUrl/todos/$id'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode(body),
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception('Failed to update todo: ${response.statusCode}');
+    }
+
+    return _parseTodo(jsonDecode(response.body));
+  }
+
+  // unused for now... 
+  static Future<Todo?> getById(String id) async {
+    final response = await http.get(Uri.parse('$_baseUrl/todos/$id'));
+
+    if (response.statusCode == 404) return null;
+    if (response.statusCode != 200) {
+      throw Exception('Failed to fetch todo: ${response.statusCode}');
+    }
+
+    return _parseTodo(jsonDecode(response.body));
+  }
+
+  static Todo _parseTodo(dynamic json) => Todo(
+        json['title'],
+        id: json['id'],
+        description: json['description'],
+        done: json['done'],
+        createdAt: DateTime.parse(json['createdAt']),
+      );
 }

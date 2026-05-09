@@ -55,15 +55,25 @@ class _TodosScopeState extends State<TodosScope> {
     }
   }
 
-  void _toggle(String id) => setState(() {
+  Future<void> _toggle(String id) async {
     final i = _todos.indexWhere((t) => t.id == id);
     if (i == -1) return;
-    _todos = [
-      ..._todos.sublist(0, i),
-      _todos[i].toggle(),
-      ..._todos.sublist(i + 1),
-    ];
-  });
+    final current = _todos[i];
+    try {
+      final todoFromServer = await ApiClient.update(id, done: !current.done);
+      if (!mounted) return;
+      // because we haven't (yet) dealt with the images we have
+      // to copy back into the TODO the potential image path
+      // this is a temporry solution
+      final merged = todoFromServer.copyWith(imagePath: current.imagePath);
+
+      setState(() {
+        _todos = [..._todos.sublist(0, i), merged, ..._todos.sublist(i + 1)];
+      });
+    } catch (e) {
+      print('Error toggling todo: $e');
+    }
+  }
 
   void _delete(String id) => setState(() {
     final i = _todos.indexWhere((t) => t.id == id);
@@ -71,15 +81,53 @@ class _TodosScopeState extends State<TodosScope> {
     _todos = [..._todos.sublist(0, i), ..._todos.sublist(i + 1)];
   });
 
-  void _update(String id, Todo updated) => setState(() {
+  Future<void> _update(String id, Todo updated) async {
     final i = _todos.indexWhere((t) => t.id == id);
     if (i == -1) return;
-    _todos = [
-      ..._todos.sublist(0, i),
-      updated,
-      ..._todos.sublist(i + 1),
-    ];
-  });
+    final current = _todos[i];
+
+    // optimistic local update (i.e. we update the UI state before the server replies)
+    setState(() {
+      _todos = [..._todos.sublist(0, i), updated, ..._todos.sublist(i + 1)];
+    });
+
+    // only sync server-tracked fields if they changed
+    final fieldsChanged = current.title != updated.title ||
+        current.description != updated.description ||
+        current.done != updated.done;
+    if (!fieldsChanged) return;
+
+    try {
+      await ApiClient.update(
+        id,
+        title: updated.title,
+        description: updated.description,
+        done: updated.done,
+      );
+    } catch (e) {
+      print('Error updating todo: $e');
+    }
+  }
+
+  Future<Todo?> _fetchById(String id) async {
+    try {
+      final todo = await ApiClient.getById(id);
+      if (todo == null || !mounted) return todo;
+      final i = _todos.indexWhere((t) => t.id == id);
+      setState(() {
+        if (i == -1) {
+          _todos = [..._todos, todo];
+        } else {
+          final merged = todo.copyWith(imagePath: _todos[i].imagePath);
+          _todos = [..._todos.sublist(0, i), merged, ..._todos.sublist(i + 1)];
+        }
+      });
+      return todo;
+    } catch (e) {
+      print('Error fetching todo: $e');
+      return null;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -89,6 +137,7 @@ class _TodosScopeState extends State<TodosScope> {
       toggle: _toggle,
       delete: _delete,
       update: _update,
+      fetchById: _fetchById,
       child: widget.child,
     );
   }
@@ -106,14 +155,16 @@ class TodosInherited extends InheritedWidget {
     required this.toggle,
     required this.delete,
     required this.update,
+    required this.fetchById,
     required super.child, // InheritedWidget must have a child (to continue the tree)
   });
 
   final List<Todo> todos;
   final Future<void> Function(String title) add;
-  final void Function(String id) toggle;
+  final Future<void> Function(String id) toggle;
   final void Function(String id) delete;
-  final void Function(String id, Todo updated) update;
+  final Future<void> Function(String id, Todo updated) update;
+  final Future<Todo?> Function(String id) fetchById;
 
   Todo? findById(String id) {
     for (final t in todos) {

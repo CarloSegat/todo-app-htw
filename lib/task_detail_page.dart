@@ -24,14 +24,13 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
   void didChangeDependencies() {
     // also called once after init
     super.didChangeDependencies();
-    if (_description == null) {
+    final scope = TodosScope.of(context);
+    final todo = scope.findById(widget.id);
+    if (todo != null && _description == null) {
       // notice how the _TaskDetailPageState does not hold a reference to the Todo
       // instead it grabs it from the scope when it needs it
-      final todo = TodosScope.of(context).findById(widget.id);
-      if (todo != null) {
-        _description = TextEditingController(text: todo.description);
-      }
-    }
+      _description = TextEditingController(text: todo.description);
+    } 
   }
 
   @override
