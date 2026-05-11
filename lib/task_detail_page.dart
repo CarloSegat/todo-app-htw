@@ -19,25 +19,48 @@ class TaskDetailPage extends StatefulWidget {
 class _TaskDetailPageState extends State<TaskDetailPage> {
   TextEditingController? _description;
   final ImagePicker _picker = ImagePicker();
+  // _scope is cached so dispose() can flush properly
+  TodosInherited? _scope;
 
   @override
   void didChangeDependencies() {
     // also called once after init
     super.didChangeDependencies();
     final scope = TodosScope.of(context);
+    _scope = scope;
     final todo = scope.findById(widget.id);
     if (todo != null && _description == null) {
       // notice how the _TaskDetailPageState does not hold a reference to the Todo
       // instead it grabs it from the scope when it needs it
       _description = TextEditingController(text: todo.description);
-    } 
+    }
   }
 
   @override
   void dispose() {
+    _flushDescription();
     // dispose tears down the listener (of the value of the text)
     _description?.dispose();
     super.dispose();
+  }
+
+  void _flushDescription() {
+    if (_scope == null || _description == null) return;
+
+    final todo = _scope!.findById(widget.id);
+    if (todo == null) return;
+
+    if (todo.description == _description!.text) return;
+
+    final id = todo.id;
+    final updated = todo.copyWith(description: _description!.text);
+    final scope = _scope!;
+    // scope.update calls setState on the ancestor. Running it directly inside
+    // dispose() happens while the element tree is locked, which makes Flutter
+    // swallow/abort the call (so the HTTP request never fires). Deferring with
+    // addPostFrameCallback runs it after the current frame, when setState is
+    // legal again.
+    WidgetsBinding.instance.addPostFrameCallback((_) => scope.update(id, updated));
   }
 
   Future<void> _share(BuildContext context) async {
@@ -130,8 +153,6 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
               labelText: 'Description',
               border: OutlineInputBorder(),
             ),
-            onChanged: (text) =>
-                scope.update(todo.id, todo.copyWith(description: text)),
           ),
           const SizedBox(height: 16),
           if (todo.imagePath != null) ...[
