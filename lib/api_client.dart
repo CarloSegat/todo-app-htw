@@ -58,7 +58,15 @@ class ApiClient {
     return _parseTodo(jsonDecode(response.body));
   }
 
-  // unused for now... 
+  static Future<void> delete(String id) async {
+    final response = await http.delete(Uri.parse('$_baseUrl/todos/$id'));
+
+    if (response.statusCode != 204) {
+      throw Exception('Failed to delete todo: ${response.statusCode}');
+    }
+  }
+
+  // unused for now...
   static Future<Todo?> getById(String id) async {
     final response = await http.get(Uri.parse('$_baseUrl/todos/$id'));
 

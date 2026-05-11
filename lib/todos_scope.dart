@@ -75,11 +75,21 @@ class _TodosScopeState extends State<TodosScope> {
     }
   }
 
-  void _delete(String id) => setState(() {
+  Future<void> _delete(String id) async {
     final i = _todos.indexWhere((t) => t.id == id);
     if (i == -1) return;
-    _todos = [..._todos.sublist(0, i), ..._todos.sublist(i + 1)];
-  });
+
+    try {
+      await ApiClient.delete(id);
+      if (mounted) {
+        setState(() {
+          _todos = [..._todos.sublist(0, i), ..._todos.sublist(i + 1)];
+        });
+      }
+    } catch (e) {
+      print('Error deleting todo: $e');
+    }
+  }
 
   Future<void> _update(String id, Todo updated) async {
     final i = _todos.indexWhere((t) => t.id == id);
@@ -162,7 +172,7 @@ class TodosInherited extends InheritedWidget {
   final List<Todo> todos;
   final Future<void> Function(String title) add;
   final Future<void> Function(String id) toggle;
-  final void Function(String id) delete;
+  final Future<void> Function(String id) delete;
   final Future<void> Function(String id, Todo updated) update;
   final Future<Todo?> Function(String id) fetchById;
 
